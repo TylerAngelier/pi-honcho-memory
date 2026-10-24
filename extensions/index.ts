@@ -23,15 +23,22 @@ const setStatus = (
   ctx: StatusContext,
   state: "off" | "connected" | "syncing" | "offline" | "error",
 ): void => {
-  const { theme } = ctx.ui;
-  const labels: Record<string, string> = {
-    off: theme.fg("dim", "🧠 Honcho off"),
-    connected: theme.fg("success", "🧠 Connected"),
-    syncing: theme.fg("warning", "🧠 Syncing"),
-    offline: theme.fg("dim", "🧠 Offline"),
-    error: theme.fg("error", "🧠 Error"),
-  };
-  ctx.ui.setStatus("honcho", labels[state]);
+  try {
+    const { theme } = ctx.ui;
+    const labels: Record<string, string> = {
+      off: theme.fg("dim", "🧠 Honcho off"),
+      connected: theme.fg("success", "🧠 Connected"),
+      syncing: theme.fg("warning", "🧠 Syncing"),
+      offline: theme.fg("dim", "🧠 Offline"),
+      error: theme.fg("error", "🧠 Error"),
+    };
+    ctx.ui.setStatus("honcho", labels[state]);
+  } catch {
+    // pi >= 1.3 invalidates session-bound ctx after session replacement
+    // (newSession/fork/switchSession); stale-ctx access throws. Status
+    // updates are best-effort: a stale ctx must never reject the async
+    // init promise, whose unhandled rejection kills the pi host process.
+  }
 };
 
 export default function honcho(pi: ExtensionAPI): void {
